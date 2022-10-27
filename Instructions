@@ -1,0 +1,270 @@
+
+// instruction LDR
+public void Ldr(String addr, int reg, int indirect, MemorySystem ms) throws IOException {
+   int address = 0;
+   // move address to register mar.
+   moveAddrToMar(addr);
+   // calculate memory address in register mar.
+   address = calMemAddr();
+   // fetch values from memory1 to mbr.
+   fetchFromMemToMbr(address, ms);
+   // move values in mbr to register reg
+   moveMbrToReg(reg);
+   address = 0;
+   if (indirect == 1) {
+      for (int i = 0; i < 16; i++) {
+         if (r[reg][i] == 1) {
+            address = address + (int) Math.pow(r[reg][i] * 2, (15 - i));
+         }
+      }
+      moveAddrToMar(Integer.toBinaryString(address));
+      address = calMemAddr();
+      fetchFromMemToMbr(address, ms);
+      moveMbrToReg(reg);
+   }
+   // print
+   System.out.println("In function Ldr() :");
+}
+
+// instruction STR
+public void Str(String addr, int reg, int indirect, MemorySystem ms) throws IOException {
+   int address = 0;
+   if (indirect == 0) {
+      // move address to mar
+      moveAddrToMar(addr);
+      // move register reg to mbr
+      moveRegToMbr(reg);
+      // calculate address in mar
+      address = calMemAddr();
+      // store the values in mbr to memory[mar[]].
+      storeMbrToMem(address, ms);
+   } else {
+      // move address to mar
+      moveAddrToMar(addr);
+      // calculate address in mar
+      address = calMemAddr();
+      // fetch address in memory to mbr
+      fetchFromMemToMbr(address, ms);
+      // move values in mbr to rTemp
+      moveMbrToRTemp();
+      // move rTemp to mar
+      moveRTempToMar();
+      // move register reg to mbr
+      moveRegToMbr(reg);
+      // calculate address in mar
+      address = calMemAddr();
+      // store the values in mbr to memory[mar[]]
+      storeMbrToMem(address, ms);
+   }
+   // print
+   System.out.println("In function Str() :");
+}
+
+// instruction LDA
+private void Lda(String addr, int reg, int indirect, MemorySystem ms) throws IOException {
+   if (indirect == 0) {
+      int addrLen = addr.length();
+      // load address to register reg
+      for (int i = 0; i < addrLen; i++) {
+         r[reg][16 - addrLen + i] = Character.getNumericValue(addr.charAt(i));
+      }
+      for (int i = 0; i < (16 - addrLen); i++) {
+         r[reg][i] = 0;
+      }
+   } else {
+      int address = 0;
+      // move address to mar
+      moveAddrToMar(addr);
+      // calculate address in mar
+      address = calMemAddr();
+      // fetch values in memory to mbr
+      fetchFromMemToMbr(address, ms);
+      // move mbr to register reg
+      moveMbrToReg(reg);
+   }
+   // print
+   System.out.println("In function Lda() :");
+}
+
+// instruction LDX
+public void Ldx(String addr, int index, int indirect, MemorySystem ms) throws IOException {
+   int address = 0;
+   // move address to mar
+   moveAddrToMar(addr);
+   // calculate values in mar
+   address = calMemAddr();
+   // fetch values from memory to mbr
+   fetchFromMemToMbr(address, ms);
+   // move values in mbr to index register x[index]
+   moveMbrToIndexReg(index);
+   address = 0;
+   if (indirect == 1) {
+      // move index register to mar
+      for (int i = 0; i < 16; i++) {
+         mar[i] = x[index][i];
+      }
+      // calculate address in mar
+      address = calMemAddr();
+      // fetch values from memory to mbr
+      fetchFromMemToMbr(address, ms);
+      // move values in mbr to index register x[index]
+      moveMbrToIndexReg(index);
+   }
+   // print
+   System.out.println("In function Ldx() :");
+}
+
+// instruction STX
+private void Stx(String addr, int index, int indirect, MemorySystem ms) throws IOException {
+   int address = 0;
+   if (indirect == 0) {
+      // move address to mar
+      moveAddrToMar(addr);
+      // move values in index register x[index] to mbr
+      moveIndexRegToMbr(index);
+      // calculate address in mar
+      address = calMemAddr();
+      // store the values in mbr to memory1[mar[]]
+      storeMbrToMem(address, ms);
+   } else {
+      // move address to mar
+      moveAddrToMar(addr);
+      // calculate address in mar
+      address = calMemAddr();
+      // fetch from memory to mbr
+      fetchFromMemToMbr(address, ms);
+      // move mbr to rTemp
+      moveMbrToRTemp();
+      // move rTemp to mar
+      moveRTempToMar();
+      // move values in index register x[index] to mbr
+      moveIndexRegToMbr(index);
+      // calculate address in mar
+      address = calMemAddr();
+      // store the values in mbr to memory1[mar[]]
+      storeMbrToMem(address, ms);
+   }
+   // print
+   System.out.println("In function Stx() :");
+}
+// instruction JMA
+private void Jma(String addr, int indirect, MemorySystem ms) throws IOException {
+   if (indirect == 0) {
+      int addrLen = addr.length();
+      // load address to register reg
+      for (int i = 0; i < addrLen; i++) {
+         pc[12 - addrLen + i] = Character.getNumericValue(addr.charAt(i));
+      }
+      for (int i = 0; i < (12 - addrLen); i++) {
+         pc[i] = 0;
+      }
+   } else {
+      int address = 0;
+      // move address to mar
+      moveAddrToMar(addr);
+      // calculate address in mar
+      address = calMemAddr();
+      // fetch values in memory to mbr
+      fetchFromMemToMbr(address, ms);
+      // move mbr to register pc
+      moveMbrToPc();
+   }
+   System.out.println("In function Jma() :");
+}
+// instruction JCC
+private void Jcc(String addr, int ccindex, int indirect, MemorySystem ms) throws IOException {
+   if (cc[ccindex] == 1) {
+      if (indirect == 0) {
+         int addrLen = addr.length();
+         // load address to register reg
+         for (int i = 0; i < addrLen; i++) {
+            pc[12 - addrLen + i] = Character.getNumericValue(addr.charAt(i));
+         }
+         for (int i = 0; i < (12 - addrLen); i++) {
+            pc[i] = 0;
+         }
+      } else {
+         int address = 0;
+         // move address to mar
+         moveAddrToMar(addr);
+         // calculate address in mar
+         address = calMemAddr();
+         // fetch values in memory to mbr
+         fetchFromMemToMbr(address, ms);
+         // move mbr to register pc
+         moveMbrToPc();
+      }
+      System.out.println("In function Jcc() :");
+   } else {
+      pcIncrement();
+      // print
+      System.out.println("In function Jcc() :");
+   }
+}
+// instruction JZ
+private void Jz(String addr, int reg, int indirect, MemorySystem ms) throws IOException {
+   for (int i = 1; i < 16; i++) {
+      if (r[reg][i] == 1) {
+         pcIncrement();
+         System.out.println("In function Jz() :");
+         return;
+      }
+   }
+   if (indirect == 0) {
+      int addrLen = addr.length();
+      // load address to register reg
+      for (int i = 0; i < addrLen; i++) {
+         pc[12 - addrLen + i] = Character.getNumericValue(addr.charAt(i));
+      }
+      for (int i = 0; i < (12 - addrLen); i++) {
+         pc[i] = 0;
+      }
+   } else {
+      int address = 0;
+      // move address to mar
+      moveAddrToMar(addr);
+      // calculate address in mar
+      address = calMemAddr();
+      // fetch values in memory to mbr
+      fetchFromMemToMbr(address, ms);
+      // move mbr to register pc
+      moveMbrToPc();
+   }
+   // print
+   System.out.println("In function Jz() :");
+}
+
+// instruction JNE
+private void Jne(String addr, int reg, int indirect, MemorySystem ms) throws IOException {
+   for (int i = 0; i < 16; i++) {
+      if (r[reg][i] == 1) {
+         if (indirect == 0) {
+            int addrLen = addr.length();
+            // load address to register reg
+            for (int j = 0; j < addrLen; j++) {
+               pc[12 - addrLen + j] = Character.getNumericValue(addr.charAt(j));
+            }
+            for (int j = 0; j < (12 - addrLen); j++) {
+               pc[j] = 0;
+            }
+         } else {
+            int address = 0;
+            // move address to mar
+            moveAddrToMar(addr);
+            // calculate address in mar
+            address = calMemAddr();
+            // fetch values in memory to mbr
+            fetchFromMemToMbr(address, ms);
+            // move mbr to register pc
+            moveMbrToPc();
+         }
+         // print
+         System.out.println("In function Jne() :");
+         return;
+      }
+   }
+   pcIncrement();
+   // print
+   System.out.println("In function Jne() :");
+}
+
